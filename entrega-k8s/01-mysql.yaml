@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-db
+  namespace: microapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-db
+  template:
+    metadata:
+      labels:
+        app: mysql-db
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: mysql
+          image: mysql:5.7
+          args: ["--performance_schema=off"]
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secretos
+                  key: MYSQL_ROOT_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD"]
+            initialDelaySeconds: 20
+            periodSeconds: 5
+          volumeMounts:
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: init-sql
+          configMap:
+            name: mysql-init
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-db
+  namespace: microapp
+spec:
+  type: ClusterIP
+  selector:
+    app: mysql-db
+  ports:
+    - port: 3306
+      targetPort: 3306

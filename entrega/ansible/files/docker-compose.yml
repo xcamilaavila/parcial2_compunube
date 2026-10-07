@@ -1,0 +1,91 @@
+services:
+  users_db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${USERS_DB_NAME}
+    volumes:
+      - ./db/init-users.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - users_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  products_db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${PRODUCTS_DB_NAME}
+    volumes:
+      - ./db/init-products.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - products_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  orders_db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${ORDERS_DB_NAME}
+    volumes:
+      - ./db/init-orders.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - orders_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  users-service:
+    image: xcamilaavila/users-service:v1
+    container_name: users-service
+    restart: always
+    depends_on:
+      users_db:
+        condition: service_healthy
+    environment:
+      PORT: "3001"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
+    ports:
+      - "3001:3001"
+
+  products-service:
+    image: xcamilaavila/products-service:v1
+    container_name: products-service
+    restart: always
+    depends_on:
+      products_db:
+        condition: service_healthy
+    environment:
+      PORT: "3002"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3002:3002"
+
+  orders-service:
+    image: xcamilaavila/orders-service:v1
+    container_name: orders-service
+    restart: always
+    depends_on:
+      orders_db:
+        condition: service_healthy
+    environment:
+      PORT: "3003"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
+    ports:
+      - "3003:3003"
+
+volumes:
+  users_db_data:
+  products_db_data:
+  orders_db_data:

@@ -1,0 +1,41 @@
+services:
+  users-service-2:
+    image: xcamilaavila/users-service:v1
+    container_name: users-service-2
+    restart: always
+    depends_on:
+      users_db:
+        condition: service_healthy
+    environment:
+      PORT: "3011"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
+    ports:
+      - "3011:3011"
+
+  products-service-2:
+    image: xcamilaavila/products-service:v1
+    container_name: products-service-2
+    restart: always
+    depends_on:
+      products_db:
+        condition: service_healthy
+    environment:
+      PORT: "3012"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3012:3012"
+
+  orders-service-2:
+    image: xcamilaavila/orders-service:v1
+    container_name: orders-service-2
+    restart: always
+    depends_on:
+      orders_db:
+        condition: service_healthy
+    environment:
+      PORT: "3013"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
+    ports:
+      - "3013:3013"

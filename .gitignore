@@ -1,0 +1,10 @@
+terraform-backup/
+*.tfstate
+*.tfstate.*
+.terraform/
+.vagrant/
+secrets/
+inventory.ini
+*.pem
+id_rsa*
+*.log

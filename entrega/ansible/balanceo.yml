@@ -1,0 +1,36 @@
+---
+- name: Levantar la segunda instancia de cada servicio en vm-microservices
+  hosts: microservices
+  vars:
+    app_dir: /opt/microapp
+  tasks:
+    - name: Copiar el compose de las replicas
+      copy:
+        src: docker-compose.replicas.yml
+        dest: "{{ app_dir }}/docker-compose.replicas.yml"
+        mode: "0644"
+
+    - name: Levantar los contenedores (base y replicas)
+      command: docker compose -f docker-compose.yml -f docker-compose.replicas.yml up -d
+      args:
+        chdir: "{{ app_dir }}"
+
+- name: Configurar HAProxy en vm-haproxy
+  hosts: haproxy
+  vars:
+    stats_password: "{{ lookup('password', playbook_dir + '/secrets/stats_pass chars=ascii_letters,digits length=14') }}"
+  tasks:
+    - name: Copiar haproxy.cfg (se valida antes de instalarlo)
+      template:
+        src: haproxy.cfg.j2
+        dest: /etc/haproxy/haproxy.cfg
+        mode: "0644"
+        validate: haproxy -c -f %s
+      notify: Reiniciar HAProxy
+
+  handlers:
+    - name: Reiniciar HAProxy
+      systemd:
+        name: haproxy
+        state: restarted
+        enabled: yes
